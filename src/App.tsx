@@ -502,13 +502,13 @@ const TaskOptionModal: Component<{
       onClick={() => props.setCurrentId(0)}
       class="fixed top-0 left-0 right-0 flex justify-center items-center z-50 bg-black bg-opacity-30 w-full p-4 overflow-x-hidden overflow-y-auto h-[calc(100%-1rem)] md:h-full"
     >
-      <div class="relative w-full max-w-md h-auto">
+      <div class="relative w-full max-w-xs h-auto">
         <div class="relative  rounded-lg shadow bg-gray-700 py-3">
           <Link href={"/insert/" + props.id}>
             <div class="flex justify-center gap-7 items-center text-lg hover: font-medium rounded-md py-2 mx-2">
-              <FiEdit class="text-xl" />
+              <FiInfo class="text-xl" />
               <button class="w-32 rounded" type="button">
-                Edit
+                Detail
               </button>
             </div>
           </Link>
@@ -524,14 +524,6 @@ const TaskOptionModal: Component<{
               Delete
             </button>
           </div>
-          <Link href={"/insert/" + props.id}>
-            <div class="flex justify-center gap-7 items-center text-lg hover: font-medium rounded-md py-2 mx-2">
-              <FiInfo class="text-xl" />
-              <button class="w-32 rounded" type="button">
-                Detail
-              </button>
-            </div>
-          </Link>
         </div>
       </div>
     </div>
