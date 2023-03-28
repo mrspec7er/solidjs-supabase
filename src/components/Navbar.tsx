@@ -1,17 +1,23 @@
 import { Link } from "@solidjs/router";
 import logoURL from "/src/assets/logo.png";
 import { AiOutlineCloseCircle } from "solid-icons/ai";
-const Navbar = () => {
+import { Component } from "solid-js";
+import { User } from "@supabase/supabase-js";
+const Navbar: Component<{
+  handleLoginwithGoogle(): Promise<void>;
+  signout(): Promise<void>;
+  user: User | null;
+}> = (props) => {
   return (
     <nav class="px-2 bg-gray-900 border-gray-700">
-      <div class="container flex flex-wrap items-center justify-between mx-auto">
+      <div class="container py-2 flex flex-wrap items-center justify-between mx-auto">
         <a href="#" class="flex items-center">
           <img src={logoURL} class="h-6 mr-3 sm:h-10" alt="iconlogo" />
           <span class="self-center text-xl font-semibold whitespace-nowrap text-white">
             Trebbo
           </span>
         </a>
-        <button
+        {/* <button
           data-collapse-toggle="navbar-multi-level"
           type="button"
           class="inline-flex items-center p-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
@@ -32,13 +38,13 @@ const Navbar = () => {
               clip-rule="evenodd"
             ></path>
           </svg>
-        </button>
+        </button> */}
         <div
           class="hidden max-sm:fixed z-50 top-0 left-0 max-sm:h-screen bg-gray-900 w-full md:block md:w-auto"
           id="navbar-multi-level"
         >
           <ul class="flex flex-col p-4 mt-4 rounded-lg md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium  text-white">
-            <li>
+            {/* <li>
               <Link
                 href="/"
                 class="block py-2 pl-3 pr-4 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-white dark:bg-blue-600 md:dark:bg-transparent"
@@ -46,7 +52,7 @@ const Navbar = () => {
               >
                 Home
               </Link>
-            </li>
+            </li> */}
             {/* <li>
               <button
                 id="dropdownNavbarLink"
@@ -188,6 +194,7 @@ const Navbar = () => {
               </a>
             </li> */}
           </ul>
+
           <div class="flex justify-center">
             <button
               data-collapse-toggle="navbar-multi-level"
@@ -200,6 +207,56 @@ const Navbar = () => {
             </button>
           </div>
         </div>
+        {props.user ? (
+          <>
+            <button
+              type="button"
+              class="flex mr-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+              id="user-menu-button"
+              aria-expanded="false"
+              data-dropdown-toggle="user-dropdown"
+              data-dropdown-placement="bottom"
+            >
+              <span class="sr-only">Open user menu</span>
+              <img
+                class="w-11 h-11 rounded-full"
+                src={props.user.user_metadata.picture}
+                alt="user photo"
+                referrerPolicy="no-referrer"
+              />
+            </button>
+            <div
+              class="z-50 hidden my-4 text-base list-none divide-y divide-gray-100 rounded-lg shadow bg-gray-700"
+              id="user-dropdown"
+            >
+              <div class="px-4 py-3">
+                <span class="block text-sm text-white">
+                  {props.user.user_metadata.name}
+                </span>
+                <span class="block text-sm font-medium text-gray-500 ">
+                  {props.user.user_metadata.email}
+                </span>
+              </div>
+              <ul class="py-2" aria-labelledby="user-menu-button">
+                <li>
+                  <button
+                    onclick={props.signout}
+                    class="block px-4 py-2 text-sm  hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                  >
+                    Sign out
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </>
+        ) : (
+          <button
+            onclick={props.handleLoginwithGoogle}
+            class="block py-2 pl-3 pr-4  rounded hover:bg-gray-500 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-gray-400 md dark:hover:bg-gray-700 md:dark:hover:bg-transparent"
+          >
+            Login
+          </button>
+        )}
       </div>
     </nav>
   );

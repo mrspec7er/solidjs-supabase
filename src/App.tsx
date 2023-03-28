@@ -15,24 +15,73 @@ import {
   Link,
   useNavigate,
 } from "@solidjs/router";
+
 import Navbar from "./components/Navbar";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, User } from "@supabase/supabase-js";
+
 const supabase = createClient(
   import.meta.env.VITE_PROJECT_URL,
   import.meta.env.VITE_ANON_KEY
 );
-import { FiDelete, FiEdit, FiInfo } from "solid-icons/fi";
+
+import { FiDelete, FiEdit } from "solid-icons/fi";
+import { FaRegularCircleDown } from "solid-icons/fa";
 import "flowbite";
 
 const App: Component = () => {
+  const [userData, setUserData] = createSignal<User | null>(null);
+  async function handleLoginwithGoogle() {
+    await supabase.auth
+      .signInWithOAuth({
+        provider: "google",
+        options: {
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+      .then((res) => {
+        console.log(res.data);
+        localStorage.setItem("userData", res.data.url!);
+        if (res.error) console.log(res.error.message);
+      });
+  }
+
+  async function signout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.log(error.message);
+    }
+  }
+
+  createEffect(() => {
+    const { data: authSession } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log(event);
+
+        setUserData(session?.user ?? null);
+      }
+    );
+  });
   return (
     <Router>
-      <Navbar />
+      <Navbar
+        user={userData()}
+        handleLoginwithGoogle={handleLoginwithGoogle}
+        signout={signout}
+      />
       <div class="container min-h-screen mx-auto">
         <Routes>
           <Route path={"/"} component={TaskList} />
           <Route path={"/insert"} component={TaskForm} />
           <Route path={"/insert/:id"} component={TaskForm} />
+          <Route
+            path={"/invitations"}
+            element={
+              <InvitationLink handleLoginwithGoogle={handleLoginwithGoogle} />
+            }
+          />
         </Routes>
       </div>
     </Router>
@@ -96,8 +145,8 @@ const TaskList: Component = () => {
         </div>
       </Link>
       <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead class="text-xs text-gray-700 uppercase bg-gray-700 dark:text-gray-400">
+        <table class="w-full text-sm text-left text-gray-300">
+          <thead class="text-gray-500 text-md uppercase">
             <tr>
               <th scope="col" class="px-6 py-3">
                 <span class="sr-only">Image</span>
@@ -109,6 +158,11 @@ const TaskList: Component = () => {
                 Deadline
               </th>
               <th scope="col" class="px-6 py-3">
+                Descriptions
+              </th>
+              <th scope="col" class="px-6 py-3"></th>
+              <th scope="col" class="px-6 py-3"></th>
+              <th scope="col" class="px-6 py-3">
                 Status
               </th>
               <th scope="col" class="px-6 py-3">
@@ -119,8 +173,8 @@ const TaskList: Component = () => {
           <tbody>
             <For each={tasks()} fallback={<p>Loading...</p>}>
               {(i) => (
-                <tr class=" border-b bg-gray-800 dark:border-gray-700 hover:dark:hover:bg-gray-600">
-                  <td class="md:p-4">
+                <tr class="border-b bg-gray-800 dark:border-gray-700 hover:dark:hover:bg-gray-600">
+                  <td colspan={1} class="md:p-4">
                     <img
                       class="md:w-32 w-full"
                       src={i.image}
@@ -128,14 +182,22 @@ const TaskList: Component = () => {
                       alt="Apple Watch"
                     />
                   </td>
-                  <td class="px-6 py-4 font-semibold text-white">{i.name}</td>
+                  <td colspan={1} class="px-6 py-4 font-semibold text-white">
+                    {i.name}
+                  </td>
                   <td class="px-6 py-4 font-semibold text-white">
                     {i.deadline}
                   </td>
-                  <td class="px-6 py-4 font-semibold text-white">
+                  <td
+                    colspan={3}
+                    class="px-6 py-4 font-semibold text-white max-w-md"
+                  >
+                    {i.description.substring(0, 75)}
+                  </td>
+                  <td colspan={1} class="px-6 py-4 font-semibold text-white">
                     {i.isDone ? <p>Completed</p> : <p>Uncompleted</p>}
                   </td>
-                  <td class="px-6 py-4">
+                  <td colspan={1} class="px-6 py-4">
                     <button
                       onClick={() => setCurrentId(i.id)}
                       class="relative inline-flex items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium rounded-lg group bg-gradient-to-br from-purple-600 to-blue-500 group-hover:from-purple-600 group-hover:to-blue-500 text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800"
@@ -506,9 +568,9 @@ const TaskOptionModal: Component<{
         <div class="relative  rounded-lg shadow bg-gray-700 py-3">
           <Link href={"/insert/" + props.id}>
             <div class="flex justify-center gap-7 items-center text-lg hover: font-medium rounded-md py-2 mx-2">
-              <FiInfo class="text-xl" />
+              <FiEdit class="text-xl" />
               <button class="w-32 rounded" type="button">
-                Detail
+                Edit
               </button>
             </div>
           </Link>
@@ -578,7 +640,7 @@ const DeleteModal: Component<{
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               ></path>
             </svg>
-            <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+            <h3 class="mb-5 text-lg font-normal text-gray-500">
               Are you sure you want to delete this task?
             </h3>
             <button
@@ -600,6 +662,24 @@ const DeleteModal: Component<{
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const InvitationLink: Component<{ handleLoginwithGoogle(): Promise<void> }> = (
+  props
+) => {
+  return (
+    <div class="h-screen w-screen flex items-center justify-center bg-slate-700">
+      <button
+        onclick={props.handleLoginwithGoogle}
+        class="relative animate-bounce inline-flex items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800"
+      >
+        <span class="relative text-xl px-20 pb-2 transition-all ease-in duration-75 bg-gray-900 rounded-md group-hover:bg-opacity-0">
+          Login
+          <FaRegularCircleDown class="text-center text-3xl mx-auto mt-3" />
+        </span>
+      </button>
     </div>
   );
 };
