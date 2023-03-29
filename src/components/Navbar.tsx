@@ -1,4 +1,4 @@
-import { Link } from "@solidjs/router";
+import { Link, useLocation } from "@solidjs/router";
 import logoURL from "/src/assets/logo.png";
 import { AiOutlineCloseCircle } from "solid-icons/ai";
 import { Component } from "solid-js";
@@ -11,12 +11,12 @@ const Navbar: Component<{
   return (
     <nav class="px-2 bg-gray-900 border-gray-700">
       <div class="container py-2 flex flex-wrap items-center justify-between mx-auto">
-        <a href="#" class="flex items-center">
+        <Link href="/" class="flex items-center">
           <img src={logoURL} class="h-6 mr-3 sm:h-10" alt="iconlogo" />
           <span class="self-center text-xl font-semibold whitespace-nowrap text-white">
             Trebbo
           </span>
-        </a>
+        </Link>
         {/* <button
           data-collapse-toggle="navbar-multi-level"
           type="button"
@@ -44,15 +44,25 @@ const Navbar: Component<{
           id="navbar-multi-level"
         >
           <ul class="flex flex-col p-4 mt-4 rounded-lg md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium  text-white">
-            {/* <li>
+            <li>
               <Link
                 href="/"
-                class="block py-2 pl-3 pr-4 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-white dark:bg-blue-600 md:dark:bg-transparent"
+                class="block py-2 pl-3 pr-4 text-white bg-blue-700 rounded md:bg-transparent md:p-0 md:dark:text-white dark:bg-blue-600 md:dark:bg-transparent"
                 aria-current="page"
               >
                 Home
               </Link>
-            </li> */}
+            </li>
+            <li>
+              <Link
+                href="/timeline"
+                class="block py-2 pl-3 pr-4 text-white bg-blue-700 rounded md:bg-transparent md:p-0 md:dark:text-white dark:bg-blue-600 md:dark:bg-transparent"
+                aria-current="page"
+              >
+                Timeline
+              </Link>
+            </li>
+
             {/* <li>
               <button
                 id="dropdownNavbarLink"

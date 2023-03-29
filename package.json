@@ -21,7 +21,9 @@
   "dependencies": {
     "@solidjs/router": "^0.8.0",
     "@supabase/supabase-js": "^2.11.0",
+    "apexcharts": "^3.37.2",
     "flowbite": "^1.6.4",
+    "solid-apexcharts": "^0.2.4",
     "solid-icons": "^1.0.4",
     "solid-js": "^1.6.10"
   }

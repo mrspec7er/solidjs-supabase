@@ -6,6 +6,8 @@ import {
   createResource,
   createSignal,
   Setter,
+  onCleanup,
+  createMemo,
 } from "solid-js";
 import {
   Routes,
@@ -18,13 +20,14 @@ import {
 
 import Navbar from "./components/Navbar";
 import { createClient, User } from "@supabase/supabase-js";
+import { SolidApexCharts } from "solid-apexcharts";
 
 const supabase = createClient(
   import.meta.env.VITE_PROJECT_URL,
   import.meta.env.VITE_ANON_KEY
 );
 
-import { FiDelete, FiEdit } from "solid-icons/fi";
+import { FiDelete, FiEdit, FiXCircle } from "solid-icons/fi";
 import { FaRegularCircleDown } from "solid-icons/fa";
 import "flowbite";
 
@@ -63,6 +66,8 @@ const App: Component = () => {
         setUserData(session?.user ?? null);
       }
     );
+
+    onCleanup(() => authSession.subscription.unsubscribe());
   });
   return (
     <Router>
@@ -76,6 +81,7 @@ const App: Component = () => {
           <Route path={"/"} component={TaskList} />
           <Route path={"/insert"} component={TaskForm} />
           <Route path={"/insert/:id"} component={TaskForm} />
+          <Route path={"/timeline"} component={TimelineChart} />
           <Route
             path={"/invitations"}
             element={
@@ -94,9 +100,12 @@ const TaskList: Component = () => {
   const [currentId, setCurrentId] = createSignal(0);
 
   const [showDeleteModal, setShowDeleteModal] = createSignal(false);
+  const [taskPreview, setTaskPreview] = createSignal({ name: "", image: "" });
+
   async function getTasks() {
     return (await supabase.from("tasks").select("*").order("deadline")).data;
   }
+  const [tasks, { refetch }] = createResource(getTasks);
   async function getSingleTask(id: number) {
     return (
       await supabase
@@ -106,7 +115,6 @@ const TaskList: Component = () => {
         .maybeSingle()
     ).data;
   }
-  const [tasks, { refetch }] = createResource(getTasks);
 
   async function handleeDeleteTask() {
     const imageURL = (await getSingleTask(currentId()))?.image.split("/");
@@ -155,6 +163,9 @@ const TaskList: Component = () => {
                 Task
               </th>
               <th scope="col" class="px-6 py-3">
+                Start At
+              </th>
+              <th scope="col" class="px-6 py-3">
                 Deadline
               </th>
               <th scope="col" class="px-6 py-3">
@@ -175,15 +186,24 @@ const TaskList: Component = () => {
               {(i) => (
                 <tr class="border-b bg-gray-800 dark:border-gray-700 hover:dark:hover:bg-gray-600">
                   <td colspan={1} class="md:p-4">
-                    <img
-                      class="md:w-32 w-full"
-                      src={i.image}
-                      loading="lazy"
-                      alt="Apple Watch"
-                    />
+                    <button
+                      onclick={() =>
+                        setTaskPreview({ name: i.name, image: i.image })
+                      }
+                    >
+                      <img
+                        class="md:w-32 w-full"
+                        src={i.image}
+                        loading="lazy"
+                        alt="Apple Watch"
+                      />
+                    </button>
                   </td>
                   <td colspan={1} class="px-6 py-4 font-semibold text-white">
                     {i.name}
+                  </td>
+                  <td class="px-6 py-4 font-semibold text-white">
+                    {i.startline}
                   </td>
                   <td class="px-6 py-4 font-semibold text-white">
                     {i.deadline}
@@ -213,6 +233,42 @@ const TaskList: Component = () => {
             </For>
           </tbody>
         </table>
+
+        <Show when={taskPreview().image}>
+          <div class="fixed top-0 left-0 flex justify-center items-center right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-screen">
+            <div class="relative w-full h-screen max-w-2xl flex justify-center items-center">
+              <div class="relative flex justify-center items-center flex-col rounded-lg shadow bg-gray-700">
+                <div class="flex items-center w-full justify-between p-4 border-b rounded-tborder-gray-600">
+                  <h3 class="text-xl font-semibold text-white">
+                    {taskPreview().name}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setTaskPreview({ name: "", image: "" })}
+                    class="text-gray-400 bg-transparent  rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white"
+                  >
+                    <FiXCircle class="text-3xl" />
+                    <span class="sr-only">Close modal</span>
+                  </button>
+                </div>
+
+                <img
+                  class="max-h-[85vh]"
+                  src={taskPreview().image}
+                  alt="previewmodalimage"
+                />
+                <button
+                  type="button"
+                  onClick={() => setTaskPreview({ name: "", image: "" })}
+                  class="text-red-700 opacity-50 absolute bottom-1/4 bg-transparent  rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:opacity-100"
+                >
+                  <FiXCircle class="text-5xl text-red-900" />
+                  <span class="sr-only">Close modal</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Show>
       </div>
 
       <Show when={currentId()}>
@@ -237,6 +293,7 @@ const TaskForm: Component = () => {
   const [name, setName] = createSignal("");
   const [image, setImage] = createSignal<File | null>(null);
   const [isDone, setIsDone] = createSignal(false);
+  const [startline, setStartline] = createSignal("");
   const [deadline, setDeadline] = createSignal("");
   const [description, setDescription] = createSignal("");
   const [imagePreview, setImagePreview] = createSignal<
@@ -280,6 +337,7 @@ const TaskForm: Component = () => {
         description: description(),
         image: `https://pohxmpugtevrqaifxnmn.supabase.co/storage/v1/object/public/files/${dataStorge.path}`,
         isDone: false,
+        startline: startline(),
         deadline: deadline(),
       };
 
@@ -298,6 +356,7 @@ const TaskForm: Component = () => {
         name: name(),
         description: description(),
         isDone: isDone(),
+        startline: startline(),
         deadline: deadline(),
       };
 
@@ -332,6 +391,7 @@ const TaskForm: Component = () => {
         description: description(),
         image: `https://pohxmpugtevrqaifxnmn.supabase.co/storage/v1/object/public/files/${dataStorge.path}`,
         isDone: isDone(),
+        startline: startline(),
         deadline: deadline(),
       };
 
@@ -375,12 +435,12 @@ const TaskForm: Component = () => {
 
   createEffect(() => {
     if (task()?.data) {
-      setName(task()?.data!.name);
-      setDescription(task()?.data!.description);
-      setDeadline(task()?.data!.deadline);
-      setIsDone(task()?.data!.isDone);
+      setName(task()?.data?.name);
+      setDescription(task()?.data?.description);
+      setStartline(task()?.data?.startline);
+      setDeadline(task()?.data?.deadline);
+      setIsDone(task()?.data?.isDone);
       setImagePreview(task()?.data!.image);
-      console.log(task()?.data!.image);
     }
   });
 
@@ -504,6 +564,18 @@ const TaskForm: Component = () => {
           </div>
           <div>
             <label for="default-input" class="block my-3 text-sm font-medium">
+              Start At
+            </label>
+            <input
+              value={startline()}
+              onInput={(e) => setStartline(e.currentTarget.value)}
+              type="date"
+              id="date-input"
+              class=" border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label for="default-input" class="block my-3 text-sm font-medium">
               Deadline
             </label>
             <input
@@ -530,7 +602,7 @@ const TaskForm: Component = () => {
             </div>
           </Show>
 
-          <div class="w-full flex justify-between">
+          <div class="w-full flex justify-between my-12">
             <Link href="/">
               <button class="relative my-3 text-white inline-flex items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium rounded-lg group bg-gradient-to-br from-purple-500 to-pink-500 group-hover:from-purple-500 group-hover:to-pink-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800">
                 <span class="relative w-32 py-2.5 transition-all ease-in duration-75  bg-gray-900 rounded-md group-hover:bg-opacity-0">
@@ -670,7 +742,7 @@ const InvitationLink: Component<{ handleLoginwithGoogle(): Promise<void> }> = (
   props
 ) => {
   return (
-    <div class="h-screen w-screen flex items-center justify-center bg-slate-700">
+    <div class="h-screen flex items-center justify-center">
       <button
         onclick={props.handleLoginwithGoogle}
         class="relative animate-bounce inline-flex items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800"
@@ -680,6 +752,71 @@ const InvitationLink: Component<{ handleLoginwithGoogle(): Promise<void> }> = (
           <FaRegularCircleDown class="text-center text-3xl mx-auto mt-3" />
         </span>
       </button>
+    </div>
+  );
+};
+
+const TimelineChart: Component = () => {
+  async function getTasks() {
+    return (await supabase.from("tasks").select("*").order("deadline")).data;
+  }
+  const [tasks] = createResource(getTasks);
+
+  function timelineFormater() {
+    const timeLineList: Array<{ x: string; y: Array<any>; fillColor: string }> =
+      [];
+    tasks()?.forEach((i, n) => {
+      timeLineList.push({
+        x: i.name,
+        y: [new Date(i.startline).getTime(), new Date(i.deadline).getTime()],
+        fillColor:
+          "#" + (((1 << 24) * Math.random()) | 0).toString(16).padStart(6, "0"),
+      });
+    });
+
+    return timeLineList;
+  }
+
+  const series = createMemo(() => {
+    const series = [
+      {
+        data: timelineFormater(),
+      },
+    ];
+
+    return series;
+  }, timelineFormater());
+
+  return (
+    <div class="text-black">
+      <SolidApexCharts
+        type="rangeBar"
+        class="text-black"
+        height={500}
+        options={{
+          chart: {
+            id: "timeline",
+          },
+          plotOptions: {
+            bar: {
+              horizontal: true,
+            },
+          },
+          xaxis: {
+            type: "datetime",
+            labels: {
+              style: {
+                colors: [],
+                fontSize: "12px",
+                fontFamily: "Helvetica, Arial, sans-serif",
+                fontWeight: 400,
+                cssClass: "apexcharts-xaxis-label",
+              },
+            },
+          },
+        }}
+        series={series()}
+      />
     </div>
   );
 };
