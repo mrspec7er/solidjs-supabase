@@ -249,6 +249,26 @@ const Navbar: Component<{
               </div>
               <ul class="py-2" aria-labelledby="user-menu-button">
                 <li>
+                  <Link
+                    href="/"
+                    class="block px-4 py-2 text-sm  hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                  >
+                    Home
+                  </Link>
+                </li>
+              </ul>
+              <ul class="py-2" aria-labelledby="user-menu-button">
+                <li>
+                  <Link
+                    href="/timeline"
+                    class="block px-4 py-2 text-sm  hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                  >
+                    Timeline
+                  </Link>
+                </li>
+              </ul>
+              <ul class="py-2" aria-labelledby="user-menu-button">
+                <li>
                   <button
                     onclick={props.signout}
                     class="block px-4 py-2 text-sm  hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"

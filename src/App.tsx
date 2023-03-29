@@ -787,12 +787,20 @@ const TimelineChart: Component = () => {
     return series;
   }, timelineFormater());
 
+  console.log(window.innerWidth);
   return (
-    <div class="text-black">
+    <div class="text-black overflow-x-auto">
       <SolidApexCharts
         type="rangeBar"
         class="text-black"
         height={500}
+        width={
+          window.innerWidth > 1025
+            ? "100%"
+            : window.innerWidth > 480
+            ? "125%"
+            : "250%"
+        }
         options={{
           chart: {
             id: "timeline",
